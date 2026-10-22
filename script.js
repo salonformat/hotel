@@ -184,8 +184,24 @@ const languageSelect = document.querySelector('.language-picker select');
 let currentYear = '1873';
 let currentLang = localStorage.getItem('hotel-wien-language') || 'de';
 let soundOn = false;
-let audioContext;
-let ambientGain;
+let currentSoundScene = 'facade';
+const audioLibrary = {
+  street: makeAudio('assets/audio/vienna-tram.mp3', true, .075),
+  fire: makeAudio('assets/audio/fireplace.mp3', true, .055),
+  cafe: makeAudio('assets/audio/cafe.mp3', true, .06),
+  wood: makeAudio('assets/audio/wood-creak.mp3', false, .22),
+  paper: makeAudio('assets/audio/paper.mp3', false, .16),
+  glass: makeAudio('assets/audio/glass.mp3', false, .2),
+  camera: makeAudio('assets/audio/camera.mp3', false, .19)
+};
+
+function makeAudio(src, loop, volume) {
+  const audio = new Audio(src);
+  audio.loop = loop;
+  audio.preload = loop ? 'metadata' : 'auto';
+  audio.volume = volume;
+  return audio;
+}
 
 function roomFor(year) {
   const base = rooms[year];
@@ -243,6 +259,7 @@ function openRoom(year) {
   chapter.setAttribute('aria-hidden', 'false');
   facade.setAttribute('aria-hidden', 'true');
   chapter.querySelector('.chapter-close').focus({preventScroll:true});
+  setSoundScene(year);
 }
 
 function discoveryCopy(found,total) {
@@ -309,6 +326,7 @@ function closeRoom() {
   chapter.setAttribute('aria-hidden', 'true');
   facade.setAttribute('aria-hidden', 'false');
   document.querySelector(`.window[data-year="${currentYear}"]`).focus({preventScroll:true});
+  setSoundScene('facade');
 }
 
 function enterRoom(button) {
@@ -400,7 +418,8 @@ function applyLanguage(lang) {
   document.querySelector('.prologue-copy h1').textContent = ui.prologueTitle;
   document.querySelector('.prologue-copy>strong').textContent = ui.prologuePromise;
   document.querySelector('.prologue-copy>span').textContent = ui.prologueBody;
-  document.querySelector('.prologue-start').textContent = ui.start;
+  document.querySelector('[data-sound="on"]').textContent = ui.startSound;
+  document.querySelector('[data-sound="off"]').textContent = ui.startSilent;
   document.querySelector('.chapter-close').textContent = ui.back;
   document.querySelector('.trace-help').textContent = ui.traces;
   document.querySelector('.chapter-source').textContent = ui.source;
@@ -425,58 +444,66 @@ languageSelect.addEventListener('change', event => applyLanguage(event.target.va
 document.querySelectorAll('.prologue-languages button').forEach(button => button.addEventListener('click', () => applyLanguage(button.dataset.lang)));
 applyLanguage(currentLang);
 
-function createAudio() {
-  if (audioContext) return;
-  const AudioEngine = window.AudioContext || window.webkitAudioContext;
-  if (!AudioEngine) return;
-  audioContext = new AudioEngine();
-  const length = audioContext.sampleRate * 3;
-  const buffer = audioContext.createBuffer(1, length, audioContext.sampleRate);
-  const data = buffer.getChannelData(0);
-  let last = 0;
-  for (let i = 0; i < length; i += 1) {
-    last = last * .985 + (Math.random() * 2 - 1) * .015;
-    data[i] = last;
-  }
-  const source = audioContext.createBufferSource();
-  const filter = audioContext.createBiquadFilter();
-  ambientGain = audioContext.createGain();
-  source.buffer = buffer; source.loop = true; filter.type = 'lowpass'; filter.frequency.value = 620; ambientGain.gain.value = 0;
-  source.connect(filter).connect(ambientGain).connect(audioContext.destination); source.start();
+const sceneAmbience = {facade:'street',1600:'fire',1900:'cafe',1873:'street',1938:null,1955:'cafe',1991:null,finale:'street'};
+
+function stopAmbience() {
+  ['street','fire','cafe'].forEach(name => {
+    const audio = audioLibrary[name];
+    audio.pause();
+    audio.currentTime = 0;
+  });
+}
+
+function setSoundScene(scene) {
+  currentSoundScene = String(scene);
+  stopAmbience();
+  if (!soundOn || document.hidden) return;
+  const name = sceneAmbience[currentSoundScene];
+  if (!name) return;
+  const audio = audioLibrary[name];
+  if (name === 'street') audio.currentTime = Math.min(8, Math.max(0, audio.duration || 8));
+  audio.play().catch(() => {});
 }
 
 function setSound(next) {
-  createAudio(); soundOn = next;
-  if (!audioContext) return;
+  soundOn = next;
   soundToggle.setAttribute('aria-pressed', String(soundOn));
   const ui = HOTEL_I18N[currentLang].ui;
   soundToggle.querySelector('span').textContent = soundOn ? ui.soundOn : ui.soundOff;
-  ambientGain.gain.cancelScheduledValues(audioContext.currentTime);
-  ambientGain.gain.linearRampToValueAtTime(soundOn ? .045 : 0, audioContext.currentTime + .7);
+  setSoundScene(currentSoundScene);
 }
 
-function noiseBurst(duration=.35, volume=.05) {
-  if (!soundOn || !audioContext) return;
-  const size = Math.floor(audioContext.sampleRate * duration);
-  const buffer = audioContext.createBuffer(1,size,audioContext.sampleRate);
-  const data = buffer.getChannelData(0); for(let i=0;i<size;i+=1)data[i]=(Math.random()*2-1)*(1-i/size);
-  const source=audioContext.createBufferSource(),filter=audioContext.createBiquadFilter(),gain=audioContext.createGain();
-  source.buffer=buffer;filter.type='lowpass';filter.frequency.value=1100;gain.gain.value=volume;source.connect(filter).connect(gain).connect(audioContext.destination);source.start();
+function playOneShot(name, rate=1) {
+  if (!soundOn || !audioLibrary[name]) return;
+  const sound = audioLibrary[name].cloneNode();
+  sound.volume = audioLibrary[name].volume;
+  sound.playbackRate = rate;
+  sound.play().catch(() => {});
 }
 
-function playDoorSound(){noiseBurst(.55,.055)}
-function playPaperSound(){noiseBurst(.12,.035)}
-function playFinaleSound(){
-  if(!soundOn||!audioContext)return;
-  [0, .28, .62].forEach((delay,index)=>{const oscillator=audioContext.createOscillator(),gain=audioContext.createGain(),time=audioContext.currentTime+delay;oscillator.frequency.value=[392,523.25,659.25][index];gain.gain.setValueAtTime(0,time);gain.gain.linearRampToValueAtTime(.035,time+.03);gain.gain.exponentialRampToValueAtTime(.0001,time+1.4);oscillator.connect(gain).connect(audioContext.destination);oscillator.start(time);oscillator.stop(time+1.5)});
+function playDoorSound(){ playOneShot('wood', .92); }
+function playTraceSound(index) {
+  const map = {
+    1600:['wood','paper','wood'],
+    1900:['glass','paper','camera'],
+    1873:['wood','wood','paper'],
+    1938:[null,'paper',null],
+    1955:['wood','glass','glass'],
+    1991:['wood','paper','paper']
+  };
+  const sound = map[currentYear]?.[index];
+  if (sound) playOneShot(sound, .96 + index * .025);
 }
+function playFinaleSound(){ setSoundScene('finale'); }
 
 soundToggle.addEventListener('click',()=>setSound(!soundOn));
-traceLayer.addEventListener('click',event=>{if(event.target.closest('.trace-dot'))playPaperSound()});
-document.querySelector('.finale-home').addEventListener('click',()=>{finale.classList.remove('open');finale.setAttribute('aria-hidden','true');facade.setAttribute('aria-hidden','false')});
-document.querySelector('.finale-replay').addEventListener('click',()=>{finale.classList.remove('open');finale.setAttribute('aria-hidden','true');facade.setAttribute('aria-hidden','false');facade.classList.remove('replay');void facade.offsetWidth;facade.classList.add('replay')});
+traceLayer.addEventListener('click',event=>{const dot=event.target.closest('.trace-dot');if(dot)playTraceSound(Number(dot.dataset.index))});
+document.querySelector('.finale-home').addEventListener('click',()=>{finale.classList.remove('open');finale.setAttribute('aria-hidden','true');facade.setAttribute('aria-hidden','false');setSoundScene('facade')});
+document.querySelector('.finale-replay').addEventListener('click',()=>{finale.classList.remove('open');finale.setAttribute('aria-hidden','true');facade.setAttribute('aria-hidden','false');facade.classList.remove('replay');void facade.offsetWidth;facade.classList.add('replay');setSoundScene('facade')});
 
-document.querySelector('.prologue-start').addEventListener('click', () => {
+document.querySelectorAll('.prologue-start').forEach(startButton => startButton.addEventListener('click', () => {
+  setSound(startButton.dataset.sound === 'on');
+  setSoundScene('facade');
   prologue.classList.add('leaving');
   facade.removeAttribute('inert');
   facade.setAttribute('aria-hidden', 'false');
@@ -485,4 +512,6 @@ document.querySelector('.prologue-start').addEventListener('click', () => {
   requestAnimationFrame(centerFacade);
   setTimeout(() => document.body.classList.add('house-awake'), 1500);
   setTimeout(() => {prologue.hidden = true}, 1100);
-});
+}));
+
+document.addEventListener('visibilitychange', () => setSoundScene(currentSoundScene));

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f7e5c6">
   <title>Hotel Wien — Geschichten aus Wiener Hotels</title>
-  <link rel="stylesheet" href="styles.css?v=20261022-5">
+  <link rel="stylesheet" href="styles.css?v=20261022-6">
 </head>
 <body>
   <label class="language-picker"><span>Language</span><select aria-label="Sprache auswählen"><option value="de">DE</option><option value="en">EN</option><option value="fr">FR</option></select></label>
@@ -25,7 +25,10 @@
         <h1>Sechs Zimmer. Seit 1600 zu Gast in Wien.</h1>
         <strong>Wie reiste man früher? Was galt als Komfort? Und warum waren Hotels oft viel mehr als nur ein Platz zum Schlafen?</strong>
         <span>Öffne sechs Fenster und entdecke konkrete Geschichten aus Wiener Hotels – von der frühen Herberge bis zum Kunsthotel.</span>
-        <button class="prologue-start" type="button">Hotel betreten</button>
+        <div class="prologue-actions">
+          <button class="prologue-start" type="button" data-sound="on">Mit Ton betreten</button>
+          <button class="prologue-start prologue-start-quiet" type="button" data-sound="off">Ohne Ton weiter</button>
+        </div>
       </div>
     </section>
     <section class="facade" aria-label="Ein gezeichnetes Wiener Hotel mit sechs historischen Fenstern" aria-hidden="true" inert>
@@ -103,7 +106,7 @@
       </div>
     </section>
   </main>
-  <script src="i18n.js?v=20261022-5"></script>
-  <script src="script.js?v=20261022-5"></script>
+  <script src="i18n.js?v=20261022-6"></script>
+  <script src="script.js?v=20261022-6"></script>
 </body>
 </html>

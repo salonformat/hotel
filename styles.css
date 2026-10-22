@@ -150,6 +150,8 @@ body:not(.waking) .sound-toggle{opacity:0;pointer-events:none}
 @keyframes prologue-camera{to{transform:scale(1.08) translate3d(.7%,-.4%,0)}}
 
 @media(prefers-reduced-motion:reduce){.facade-camera,.light,.curtain,.facade-title,.facade-help,.facade-intro,.window,.window:after,.ink-leaf,.cloth,.hanging-light,.passing-line,.chapter-image,.chapter-light,.trace-dot,.trace-help,.finale>img,.finale-windows i{animation:none!important}.waking:not(.house-awake) .window{opacity:1;pointer-events:auto}.window-portal.opening{animation:none;clip-path:inset(0 42% 0 0)}.chapter{transition:opacity .2s;clip-path:none}}
+.prologue-actions{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;margin-top:1.1rem}.prologue-actions .prologue-start{margin-top:0}.prologue-start-quiet{background:transparent!important;color:#fff!important;border-color:#fff!important}.prologue-start-quiet:hover,.prologue-start-quiet:focus-visible{background:#ffffff1f!important}
+@media(max-width:480px){.prologue-actions{align-items:stretch}.prologue-actions .prologue-start{flex:1 1 100%;min-height:2.7rem}}
 
 ::selection{background:var(--blue);color:var(--cream)}
 
