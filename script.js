@@ -245,7 +245,7 @@ function openRoom(year) {
   setTimeout(() => roomPanLayer.classList.remove('entering'), 1400);
   roomPanLayer.style.setProperty('--look-x', '0px');
   roomPanLayer.style.setProperty('--look-y', '0px');
-  const traceWord = currentLang === 'de' ? 'Spur' : currentLang === 'fr' ? 'Indice' : 'Clue';
+  const traceWord = currentLang === 'de' ? 'Detail' : currentLang === 'fr' ? 'Détail' : 'Detail';
   traceLayer.innerHTML = room.traces.map((trace,index) => `<button class="trace-dot" style="--x:${trace.x}%;--y:${trace.y}%;--delay:${index * .18}s" data-index="${index}" aria-label="${traceWord} ${index + 1}: ${trace.label}"><i>${index + 1}</i><span>${trace.label}</span></button>`).join('');
   chapter.querySelector('.chapter-next').textContent = roomIndex === years.length - 1 ? ui.finaleNext : `${ui.next}: ${roomFor(nextYear).hotel}`;
   chapter.querySelector('.chapter-more-label').textContent = ui.more;
@@ -263,9 +263,9 @@ function openRoom(year) {
 }
 
 function discoveryCopy(found,total) {
-  if (currentLang === 'en') return found === total ? 'All three clues found. Continue the journey.' : `${found} of ${total} clues found`;
-  if (currentLang === 'fr') return found === total ? 'Les trois indices sont trouvés. Continuez le voyage.' : `${found} indice${found > 1 ? 's' : ''} sur ${total}`;
-  return found === total ? 'Alle drei Spuren gefunden. Die Reise geht weiter.' : `${found} von ${total} Spuren gefunden`;
+  if (currentLang === 'en') return found === total ? 'All three details viewed.' : `${found} of ${total} details explored`;
+  if (currentLang === 'fr') return found === total ? 'Les trois détails ont été vus.' : `${found} détail${found === 1 ? '' : 's'} sur ${total} découvert${found === 1 ? '' : 's'}`;
+  return found === total ? 'Alle drei Details angesehen.' : `${found} von ${total} Details entdeckt`;
 }
 
 function updateDiscoveryState() {
@@ -283,7 +283,7 @@ function updateDiscoveryState() {
   takeaway.textContent = roomTakeaways[currentLang][currentYear];
   takeaway.hidden = found.size !== total;
   const next = chapter.querySelector('.chapter-next');
-  next.disabled = found.size !== total;
+  next.disabled = false;
   next.setAttribute('aria-describedby','trace-progress');
   document.querySelector(`.window[data-year="${currentYear}"]`)?.classList.toggle('complete',found.size === total);
 }
@@ -422,6 +422,7 @@ function applyLanguage(lang) {
   document.querySelector('[data-sound="off"]').textContent = ui.startSilent;
   document.querySelector('.chapter-close').textContent = ui.back;
   document.querySelector('.trace-help').textContent = ui.traces;
+  traceLayer.setAttribute('aria-label', ui.detailsLabel);
   document.querySelector('.chapter-source').textContent = ui.source;
   document.querySelector('.source-label').textContent = ui.sourceLabel;
   document.querySelector('.finale-copy>p').textContent = ui.finaleKicker;
