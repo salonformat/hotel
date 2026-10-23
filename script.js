@@ -192,7 +192,8 @@ const audioLibrary = {
   wood: makeAudio('assets/audio/wood-creak.mp3', false, .22),
   paper: makeAudio('assets/audio/paper.mp3', false, .16),
   glass: makeAudio('assets/audio/glass.mp3', false, .2),
-  camera: makeAudio('assets/audio/camera.mp3', false, .19)
+  camera: makeAudio('assets/audio/camera.mp3', false, .19),
+  carpet: makeAudio('assets/audio/carpet-steps.mp3', false, .075)
 };
 
 function makeAudio(src, loop, volume) {
@@ -260,6 +261,7 @@ function openRoom(year) {
   facade.setAttribute('aria-hidden', 'true');
   chapter.querySelector('.chapter-close').focus({preventScroll:true});
   setSoundScene(year);
+  if (year !== '1600') setTimeout(() => playOneShot('carpet', .92), 360);
 }
 
 function discoveryCopy(found,total) {
@@ -445,7 +447,9 @@ languageSelect.addEventListener('change', event => applyLanguage(event.target.va
 document.querySelectorAll('.prologue-languages button').forEach(button => button.addEventListener('click', () => applyLanguage(button.dataset.lang)));
 applyLanguage(currentLang);
 
-const sceneAmbience = {facade:'street',1600:'fire',1900:'cafe',1873:'street',1938:null,1955:'cafe',1991:null,finale:'street'};
+// Street sound belongs outside the hotel only. Inside, each room keeps a
+// restrained and historically plausible acoustic character.
+const sceneAmbience = {facade:'street',1600:'fire',1900:'cafe',1873:'cafe',1938:null,1955:null,1991:null,finale:'street'};
 
 function stopAmbience() {
   ['street','fire','cafe'].forEach(name => {
